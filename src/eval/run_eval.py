@@ -124,10 +124,10 @@ def parse_args():
     if args.data in ['nq_open','hotpotqa','triviaqa','webqa','PubMedQA','2WikiMultiHopQA']:
         args.task_type = 'open_qa'
         args.eval_metrics = 'substring_match'
-    elif args.data in ['truthfulqa']:
+    elif args.data in ['truthfulqa','PubMedQA_long_answer']:
         args.task_type = 'open_qa'
         args.eval_metrics = 'truthfulqa_f1_rl'
-    elif args.data in ['factkg']:
+    elif args.data in ['factkg','strategyqa']:
         args.task_type = 'fact_checking'
         args.eval_metrics = 'fact_checking_acc'
     
