@@ -89,8 +89,8 @@ CUDA_VISIBLE_DEVICES=0 python -m src.eval.run_eval \
 
 with xRAG:
 ```bash
-CUDA_VISIBLE_DEVICES=2 python -m src.eval.run_eval \
-        --data triviaqa \
+CUDA_VISIBLE_DEVICES=0 python -m src.eval.run_eval \
+        --data triviaqa  \
         --model_name_or_path /data1/whl/xRAG/pretrained_model/finetune/last \
         --retriever_name_or_path /data1/whl/Salesforce/SFR-Embedding-Mistral \
         --use_rag
