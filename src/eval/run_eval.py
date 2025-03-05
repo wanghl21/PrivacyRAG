@@ -384,8 +384,7 @@ if __name__ == "__main__":
     retrieval_embed_length = 0
     retriever,retriever_tokenizer = None,None
     if args.retriever_name_or_path is not None:
-    
-        if args.retriever_name_or_path.lower() == 'salesforce/sfr-embedding-mistral':
+        if 'salesforce/sfr-embedding-mistral' in args.retriever_name_or_path.lower() :
             retriever = SFR.from_pretrained(args.retriever_name_or_path,torch_dtype = torch.bfloat16)
             retriever_tokenizer = AutoTokenizer.from_pretrained(args.retriever_name_or_path)
         retrieval_embed_length = retriever.get_embed_length()

@@ -329,7 +329,7 @@ def eval_multiple_choice(generated_answers,answers):
     return round(sum(ret)/len(ret),3),ret
 
 
-def get_unigram_f1(text: str, answers: list[str]) -> float:
+def get_unigram_f1(text, answers):
     """Calculate unigram f1 score between the text and reference answers."""
     def _get_unigram_f1(text,answers):
         if isinstance(answers,str):

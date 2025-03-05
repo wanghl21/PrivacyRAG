@@ -7,7 +7,7 @@ import random
 import types
 import pickle,json
 # import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"  
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1,3"  
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["WANDB_IGNORE_GLOBS"]='*.pth' ## not upload ckpt to wandb cloud
 
@@ -247,7 +247,8 @@ def parse_args():
             setattr(args,k,v)
 
     args.train_file = os.path.join(args.workdir,args.train_file)
-    if args.dev_file is not None:args.dev_file = os.path.join(args.workdir,args.dev_file)
+    args.dev_file = os.path.join(args.workdir,args.dev_file)
+    # if args.dev_file is not None:args.dev_file = os.path.join(args.workdir,args.dev_file)
     if args.retriever_name_or_path is not None and os.path.isdir(args.retriever_name_or_path):
         args.retriever_name_or_path = os.path.join(args.workdir,args.retriever_name_or_path)
     if os.path.isdir(os.path.join(args.workdir,args.model_name_or_path)):
@@ -411,7 +412,7 @@ def main():
     #     checkpoint_dir = [os.path.join(wandb_tracker.run.dir,'checkpoint')]
     # if accelerator.use_distributed:dist.broadcast_object_list(checkpoint_dir,src=0)
     # args.output_dir = checkpoint_dir[0]
-    args.output_dir = "/data/wanghuili/pretrained_model/"+args.task_type+"/"
+    args.output_dir = "/data1/whl/xRAG/pretrained_model/"+args.task_type+"/"
 
     if retriever is not None:
         retriever = retriever.to(accelerator.device)
