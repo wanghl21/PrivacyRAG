@@ -55,7 +55,17 @@ accelerate launch \
     --main_process_port 29666 \
     -m \
     src.language_modeling.train \
-    --config config/language_modeling/pretrain.yaml \
+    --config config/language_modeling/pretrain.yaml 
+    
+    
+accelerate launch \
+    --mixed_precision bf16 \
+    --num_machines 1 \
+    --num_processes 2 \
+    --main_process_port 29666 \
+    -m \
+    src.language_modeling.train \
+    --config config/language_modeling/finetune.yaml 
 
 
 CUDA_VISIBLE_DEVICES=2,3 python src/language_modeling/train.py --config config/language_modeling/pretrain.yaml 
@@ -82,7 +92,7 @@ with xRAG:
 CUDA_VISIBLE_DEVICES=0 python -m src.eval.run_eval \
         --data triviaqa \
         --model_name_or_path Hannibal046/xrag-7b \
-        --retriever_name_or_path Salesforce/SFR-Embedding-Mistral \
+        --retriever_name_or_path /data1/whl/Salesforce/SFR-Embedding-Mistral \
         --use_rag
 ```
 

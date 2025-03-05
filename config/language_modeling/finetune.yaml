@@ -1,15 +1,15 @@
 ## data
-train_file: data/instruction_tuning/processed/context_aware_instrution_tuning_data.jsonl
+train_file: /data1/whl/xRAG/finetune/finetune_data/finetune_data.jsonl
 max_seq_length: 1024  
 retrieval_context_length: 180
 preprocessing_num_workers: 32
 overwrite_cache: false
 use_rag_tuning: true
-
+max_train_samples: 200000
 ## model
-model_name_or_path: pretrained_model/sfr-mistral-7b
+model_name_or_path: /data1/whl/xRAG/pretrained_model/pretrain/last
 chat_format: mistral
-retriever_name_or_path: /data/huangyuanhong/huggingface/transformers/Salesforce/SFR-Embedding-Mistral
+retriever_name_or_path: /data1/whl/Salesforce/SFR-Embedding-Mistral
 
 ## train
 task_type: finetune
@@ -26,13 +26,13 @@ kl_temperature: 1.0
 clip_grad_norm: -1.0
 seed: 980406
 per_device_train_batch_size: 4
-gradient_accumulation_steps: 2   ## assume there are 8 GPUs
+gradient_accumulation_steps: 4   ## assume there are 8 GPUs
 update_projector_only: true
 
 ## logging
 logging_steps: 1
 project_name: xrag_finetune
 exp_name: test_finetune
-# checkpointing_steps: "1000" ## string number or epoch
+checkpointing_steps: "1000" ## string number or epoch
 
 

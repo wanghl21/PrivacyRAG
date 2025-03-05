@@ -247,8 +247,8 @@ def parse_args():
             setattr(args,k,v)
 
     args.train_file = os.path.join(args.workdir,args.train_file)
-    args.dev_file = os.path.join(args.workdir,args.dev_file)
-    # if args.dev_file is not None:args.dev_file = os.path.join(args.workdir,args.dev_file)
+    # args.dev_file = os.path.join(args.workdir,args.dev_file)
+    if args.dev_file is not None:args.dev_file = os.path.join(args.workdir,args.dev_file)
     if args.retriever_name_or_path is not None and os.path.isdir(args.retriever_name_or_path):
         args.retriever_name_or_path = os.path.join(args.workdir,args.retriever_name_or_path)
     if os.path.isdir(os.path.join(args.workdir,args.model_name_or_path)):
@@ -406,7 +406,7 @@ def main():
     #     }
     # )
     accelerator.print(json.dumps(vars(args),indent=4))
-    checkpoint_dir = [None]
+    # checkpoint_dir = [None]
     # if accelerator.is_local_main_process:
     #     wandb_tracker = accelerator.get_tracker("wandb")
     #     checkpoint_dir = [os.path.join(wandb_tracker.run.dir,'checkpoint')]
