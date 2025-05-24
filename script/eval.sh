@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=3
 data_path=BioASQ-TaskB
-pretrained_model_path=/data/huangyuanhong/shandong/xRAG/pretrained_model/finetune/qwen/bge-large/last/model
+pretrained_model_path=pretrained_model/qwen
 retriever_path=BAAI/bge-large-en-v1.5
 
 ### Utility Evaluation
