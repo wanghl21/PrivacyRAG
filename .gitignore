@@ -1,0 +1,34 @@
+# data
+res/
+res
+draft.ipynb
+draft.py
+.empty
+wandb
+downloads
+embedding
+__pycache__
+ranking.tsv
+bug.py
+model.txt
+ColBERT
+transformers
+temp
+nohup.out
+atlas
+nanoDPR
+embeddings
+RAG-Gist
+tmp
+results
+output
+wandb
+open-instruct
+flash-attention
+nanoGPT
+pretrained_model
+DeepSpeed
+experiments
+.vscode
+# model
+processed_data

@@ -1,0 +1,16 @@
+accelerate==1.4.0
+compare_mt==0.2.10
+datasets==3.3.2
+deepspeed==0.15.4
+numpy==2.2.6
+pandas==2.2.3
+pysbd==0.3.4
+PyYAML==6.0.2
+PyYAML==6.0.2
+regex==2024.11.6
+rouge==1.0.1
+sacrebleu==2.5.1
+tokenizers==0.21.1
+torch==2.6.0
+tqdm==4.67.1
+transformers==4.45.2
