@@ -29,5 +29,4 @@ use_split_pretrain: false
 ## logging
 logging_steps: 1
 project_name: prirag_pretraining
-exp_name: wikipedia_pretrain
 checkpointing_steps: "200000" ## string number or epoch
