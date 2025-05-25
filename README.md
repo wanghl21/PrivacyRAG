@@ -18,14 +18,8 @@ PriRAG is a privacy-preserving framework for cloud-based RAG systems that protec
 
 ### Environment Setup
 
-1. **Clone the Repository**
 
-```bash
-git clone https://github.com/wanghl21/PrivacyRAG.git
-cd PrivacyRAG
-```
-
-2. **Install Dependencies**
+1. **Install Dependencies**
 
 Install all dependencies using pip:
 
@@ -34,7 +28,6 @@ pip install -r requirements.txt
 ```
 
 ## Model & Data
-- Our trained model is available at [Hugging Face Hub]()
 - Download [enwiki-dec2021](https://github.com/facebookresearch/atlas?tab=readme-ov-file#models) as pretraining data
 - Run [prepare_data.py](data/finetune/prepare_data.py) to prepare the data for finetuning
 
@@ -48,10 +41,10 @@ For a full list of evaluation options, run:
 python -m src.eval.run_eval --help
 ```
 
-## Citation
+<!-- ## Citation
 If you use PriRAG in your research, please cite our paper:
 ```bibtex
 
-```
+``` -->
 
-## License
+<!-- ## License -->
