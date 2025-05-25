@@ -2,7 +2,7 @@
 train_file: data/pretrain/train-2000000.jsonl
 max_seq_length: 512
 retrieval_context_single_max_len: 180
-max_retrieval_context_length: 180
+max_retrieval_context_length: 512
 preprocessing_num_workers: 8
 overwrite_cache: false
 max_train_samples: 200000
@@ -29,4 +29,4 @@ use_split_pretrain: false
 ## logging
 logging_steps: 1
 project_name: prirag_pretraining
-checkpointing_steps: "200000" ## string number or epoch
+checkpointing_steps: '200000' ## string number or epoch
