@@ -154,7 +154,7 @@ def parse_args():
         "--target_adaptive_attack",
         type=str2bool,
         default=False,
-        help="Whether to evaluate under a target adaptive attack scenario (adversary knows the target task)"
+        help="Whether to evaluate under a target adaptive attack scenario"
     )
     # Enables untargeted model inversion attack evaluation scenario
     parser.add_argument(
