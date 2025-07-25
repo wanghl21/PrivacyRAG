@@ -1,9 +1,11 @@
-## built-in
-import argparse, json, os
+# built-in
+import argparse
+import json
+import os
 import time
 import yaml
 
-## third party
+# third party
 from transformers import (
     MistralForCausalLM,
     AutoModelForCausalLM,
@@ -20,7 +22,7 @@ import pandas as pd
 import random
 import math
 
-## own
+# own
 from src.model import (
     PriMistralForCausalLM,
     PriQwen2ForCausalLM,
@@ -49,6 +51,7 @@ from src.utils import (
 
 def create_prompt_with_chat_format(messages, tokenizer, *args, **kwargs):
     return tokenizer.apply_chat_template(messages, tokenize=False)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -121,6 +124,31 @@ def parse_args():
         default=0.0,
         help="Probability (0-1) of using query-aware retrieval for each sample"
     )
+    parser.add_argument(
+        "--add_dp_noise",
+        type=str2bool,
+        default=False,
+        help="whether to add dp noise to the proxy embedding",
+    )
+    parser.add_argument(
+        "--dp_epsilon",
+        type=float,
+        default=1.0,
+        help="epsilon for gaussian dp",
+    )
+    parser.add_argument(
+        "--dp_delta",
+        type=float,
+        default=1e-5,
+        help="delta for gaussian dp",
+    )
+    parser.add_argument(
+        "--dp_sensitivity",
+        type=float,
+        default=1,
+        help="sensitivity for gaussian dp",
+    )
+
     # Enables target adaptive attack evaluation scenario
     parser.add_argument(
         "--target_adaptive_attack",
@@ -156,7 +184,7 @@ def parse_args():
         ]:
             args.task_type = "open_qa"
             args.eval_metrics = "substring_match"
-        elif args.data in ["truthfulqa", "PubMedQA_long_answer","ms_marco","emrqa"]:
+        elif args.data in ["truthfulqa", "PubMedQA_long_answer", "ms_marco", "emrqa"]:
             args.task_type = "open_qa"
             args.eval_metrics = "f1_rl_bleu"
         elif args.data in ["factkg", "strategyqa"]:
@@ -166,7 +194,8 @@ def parse_args():
                 args.task_type = "open_qa"
                 args.eval_metrics = "substring_match"
 
-    args.retrieval_topk = [x - 1 for x in args.retrieval_topk]  ## rank starts from 1
+    # rank starts from 1
+    args.retrieval_topk = [x - 1 for x in args.retrieval_topk]
 
     args.chat_format = eval(f"create_prompt_with_chat_format")
 
@@ -195,15 +224,15 @@ PROMPT_TEMPLATES = {
 def get_start_prompt(task_type, use_rag, sample=None):
     """
     Generate the appropriate instruction text based on task type and retrieval mode.
-    
+
     This function returns task-specific instructions that tell the model what to do,
     with variations depending on whether retrieval-augmented generation is enabled.
-    
+
     Args:
         task_type: The type of task (open_qa, fact_checking, or paraphase)
         use_rag: Boolean indicating whether retrieval-augmented generation is enabled
         sample: Optional sample data (unused but kept for potential future extensions)
-        
+
     Returns:
         str: The appropriate instruction text for the specified task and mode
     """
@@ -223,17 +252,18 @@ def get_start_prompt(task_type, use_rag, sample=None):
             False: "Paraphrase the following sentences:",
         }[use_rag]
 
+
 @torch.no_grad()
 def prepare_retrieval_embeds(
     backgrounds, questions, retriever, tokenizer, embedding_path, batch_size=16
 ):
     """
     Prepare document embeddings for retrieval-augmented generation.
-    
+
     This function either loads pre-computed embeddings from disk or generates
     new embeddings using the retriever model. Query-aware embeddings can be 
     conditionally generated based on the global query_aware_rate setting.
-    
+
     Args:
         backgrounds: List of background documents to embed
         questions: List of questions (used for query-aware embedding)
@@ -241,7 +271,7 @@ def prepare_retrieval_embeds(
         tokenizer: Tokenizer for the retriever model
         embedding_path: Path to pre-computed embeddings (if available)
         batch_size: Number of documents to process in each batch
-        
+
     Returns:
         list: Document embeddings for retrieval-augmented generation
     """
@@ -250,16 +280,17 @@ def prepare_retrieval_embeds(
         embeddings = []
         for file in os.listdir(embedding_path):
             if file.endswith(".pt"):
-                embeddings.extend(torch.load(os.path.join(embedding_path, file)))
+                embeddings.extend(torch.load(
+                    os.path.join(embedding_path, file)))
         return embeddings
     else:
         # Process backgrounds in batches to manage memory usage
         backgrounds = [
-            backgrounds[idx : idx + batch_size]
+            backgrounds[idx: idx + batch_size]
             for idx in range(0, len(backgrounds), batch_size)
         ]
         questions = [
-            questions[idx : idx + batch_size]
+            questions[idx: idx + batch_size]
             for idx in range(0, len(questions), batch_size)
         ]
         device = retriever.device
@@ -280,26 +311,30 @@ def prepare_retrieval_embeds(
                 return_tensors="pt",
             )
 
-            ## return a torch tensor of shape [batch_size,d_model]
+            # return a torch tensor of shape [batch_size,d_model]
             query_aware_ = random.random()
             if query_aware_ < args.query_aware_rate:
                 embeds = get_retrieval_embeds_query_aware(
                     retriever=retriever,
                     input_query_ids=tokenized_query['input_ids'].to(device),
-                    query_attention_mask=tokenized_query['attention_mask'].to(device),
+                    query_attention_mask=tokenized_query['attention_mask'].to(
+                        device),
                     input_ids=tokenized_retrieval_text["input_ids"].to(device),
-                    attention_mask=tokenized_retrieval_text["attention_mask"].to(device),
+                    attention_mask=tokenized_retrieval_text["attention_mask"].to(
+                        device),
                 ).cpu()
             else:
                 embeds = get_retrieval_embeds(
                     model=retriever,
                     input_ids=tokenized_retrieval_text["input_ids"].to(device),
-                    attention_mask=tokenized_retrieval_text["attention_mask"].to(device),
+                    attention_mask=tokenized_retrieval_text["attention_mask"].to(
+                        device),
                 ).cpu()
 
             embeds = [embeds[idx] for idx in range(embeds.shape[0])]
             ret.extend(embeds)
         return ret
+
 
 @torch.no_grad()
 def llm_for_open_generation(
@@ -314,11 +349,11 @@ def llm_for_open_generation(
     total_test_number = len(prompts)
     device = llm.device
     batched_prompts = [
-        prompts[idx : idx + batch_size] for idx in range(0, len(prompts), batch_size)
+        prompts[idx: idx + batch_size] for idx in range(0, len(prompts), batch_size)
     ]
     if retrieval_embeds is not None:
         batched_retrieval_embeds = [
-            retrieval_embeds[idx : idx + batch_size]
+            retrieval_embeds[idx: idx + batch_size]
             for idx in range(0, len(retrieval_embeds), batch_size)
         ]
         assert len(batched_prompts) == len(batched_retrieval_embeds)
@@ -328,7 +363,8 @@ def llm_for_open_generation(
     )
     for batch_idx in range(len(batched_prompts)):
         prompt = batched_prompts[batch_idx]
-        tokenized_propmt = llm_tokenizer(prompt, padding="longest", return_tensors="pt")
+        tokenized_propmt = llm_tokenizer(
+            prompt, padding="longest", return_tensors="pt")
         input_ids = tokenized_propmt.input_ids.to(device)
         attention_mask = tokenized_propmt.attention_mask.to(device)
         stopping_criteria = stop_sequences_criteria(
@@ -344,7 +380,7 @@ def llm_for_open_generation(
                 llm_tokenizer, 0, input_ids.shape[0]
             )
 
-        ## actual computation
+        # actual computation
         generated_output = llm.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -355,7 +391,7 @@ def llm_for_open_generation(
             use_cache=True,
             **retrieval_kwargs,
         )
-        ## because HF generate with inputs_embeds would not return prompt
+        # because HF generate with inputs_embeds would not return prompt
         input_length = 0 if retrieval_kwargs else input_ids.shape[1]
         results = tokenizer.batch_decode(
             generated_output[:, input_length:], skip_special_tokens=False
@@ -385,20 +421,22 @@ def format_one_example(
     backgrounds = []
 
     if use_rag:
-        backgrounds = sample["background"]  ## a list
+        backgrounds = sample["background"]  # a list
         background_prompts = ""
 
         for background in backgrounds:
             if retrieval_embed_length > 0:
                 background_prompts += (
-                    " ".join([PLACEHOLDER_TOKEN] * retrieval_embed_length) + " "
+                    " ".join([PLACEHOLDER_TOKEN] *
+                             retrieval_embed_length) + " "
                 )
 
             else:
                 background_prompts += background + " "
         background_prompts = background_prompts.strip()
         prompt = (
-            BACKGROUND_PROMPT_TEMPLATE.format_map(dict(background=background_prompts))
+            BACKGROUND_PROMPT_TEMPLATE.format_map(
+                dict(background=background_prompts))
             + prompt
         )
 
@@ -410,11 +448,11 @@ def get_n_shot_prompt(
 ):
     """
     Generate n-shot prompts for few-shot learning scenarios.
-    
+
     This function creates prompt examples with corresponding background information
     for a few-shot learning setup, where the model is shown a few examples of the task
     before being asked to perform the task on new data.
-    
+
     Args:
         dev_data: Development data containing examples for n-shot learning
         n_shot: Number of shot (examples) to include
@@ -423,7 +461,7 @@ def get_n_shot_prompt(
         retrieval_embed_length: Length of retrieval embeddings (for placeholder tokens)
         model: The model being used (for tokenization)
         tokenizer: The tokenizer being used
-        
+
     Returns:
         tuple: A tuple containing two lists - n_shot_prompt and n_shot_background
     """
@@ -461,11 +499,11 @@ def prepare_prompts(
 ):
     """
     Prepare prompts for evaluation or inference.
-    
+
     This function constructs the full prompts that will be fed into the language model,
     including any necessary background information and few-shot examples. It also handles
     the formatting required for different task types and retrieval modes.
-    
+
     Args:
         dev_data: Development data for few-shot examples (if applicable)
         test_data: Test data that requires prompting
@@ -476,7 +514,7 @@ def prepare_prompts(
         use_rag: Boolean indicating whether to use retrieval-augmented generation
         retrieval_embed_length: Length of retrieval embeddings (for placeholder tokens)
         chat_format: Optional chat format function for formatting prompts
-        
+
     Returns:
         tuple: A tuple containing three lists - prompts, questions, and backgrounds
     """
@@ -485,13 +523,14 @@ def prepare_prompts(
     backgrounds = []
     questions = []
     original_n_shot = n_shot
-    print("len(test_data)",len(test_data))
+    print("len(test_data)", len(test_data))
     for idx, sample in enumerate(test_data):
         n_shot = original_n_shot
         while True:
-            prompt_start = get_start_prompt(task_type, use_rag=use_rag, sample=sample)
+            prompt_start = get_start_prompt(
+                task_type, use_rag=use_rag, sample=sample)
             question = sample["question"]
-            
+
             # prompt = PROMPT_TEMPLATES[task_type].format_map(prompt_dict).strip()
             prompt_end, background = format_one_example(
                 sample,
@@ -513,7 +552,7 @@ def prepare_prompts(
                     tokenizer=tokenizer,
                 )
             else:
-                ## select n-shot within the same subjects for MMLU
+                # select n-shot within the same subjects for MMLU
                 dev_data_with_same_subjects = []
                 for d in dev_data:
                     if d["subject"] == sample["subject"]:
@@ -543,9 +582,11 @@ def prepare_prompts(
             if chat_format is not None:
                 messages = [{"role": "user", "content": prompt}]
                 if args.untarget_inversion_attack:
-                    prompt = chat_format(messages, tokenizer) + "The paraphrased text is"
+                    prompt = chat_format(messages, tokenizer) + \
+                        "The paraphrased text is"
                 else:
-                    prompt = chat_format(messages, tokenizer) + " The answer is:"
+                    prompt = chat_format(
+                        messages, tokenizer) + " The answer is:"
 
             tokenized_prompt = tokenizer(
                 prompt, truncation=False, add_special_tokens=False
@@ -567,7 +608,8 @@ def prepare_prompts(
     print("**" * 20, "show questions example", "**" * 20)
     print(questions[0])
 
-    return prompts,questions, backgrounds
+    return prompts, questions, backgrounds
+
 
 def load_dataset(data, use_rag, args):
     if args.target_adaptive_attack:
@@ -591,10 +633,18 @@ def load_dataset(data, use_rag, args):
 
     return dev_data, test_data
 
+
+def add_gaussian_noise(tensor, epsilon=1.0, delta=1e-5, sensitivity=1.0):
+    """
+    添加高斯噪声实现(ϵ,δ)-差分隐私
+    """
+    sigma = math.sqrt(2 * math.log(1.25/delta)) * sensitivity / epsilon
+    noise = torch.randn_like(tensor) * sigma
+    return tensor + noise
+
+
 args = parse_args()
-
 if __name__ == "__main__":
-
 
     if args.use_rag:
         if args.retriever_name_or_path is not None:
@@ -604,7 +654,7 @@ if __name__ == "__main__":
     else:
         args.eval_type = "woRAG"
 
-    ## load llm
+    # load llm
     config = AutoConfig.from_pretrained(args.model_name_or_path)
     MODEL_CLASS = eval(config.architectures[0])
     model = MODEL_CLASS.from_pretrained(
@@ -615,11 +665,11 @@ if __name__ == "__main__":
     )
 
     model.eval()
-    ## load tokenizer
+    # load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         args.model_name_or_path,
         padding_side="left",
-        add_eos_token=False,  ## import to include this!
+        add_eos_token=False,  # import to include this!
         use_fast=False,
     )
     if tokenizer.pad_token:
@@ -636,9 +686,10 @@ if __name__ == "__main__":
         retriever = model
         retriever_tokenizer = tokenizer
     else:
-        ## load retriever and retriever_tokenizer
+        # load retriever and retriever_tokenizer
         device = (
-            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+            torch.device("cuda") if torch.cuda.is_available(
+            ) else torch.device("cpu")
         )
         retriever, retriever_tokenizer = None, None
         if args.retriever_name_or_path is not None:
@@ -673,16 +724,18 @@ if __name__ == "__main__":
             retriever.eval()
             retriever = retriever.to(device)
     retrieval_embed_length = retriever.get_embed_length()
-    
+
     # set Placeholder for model
     # check if the model has a special token for Placeholder
     vocab = tokenizer.get_vocab()
     if PLACEHOLDER_TOKEN not in vocab:
-        tokenizer.add_tokens([AddedToken(PLACEHOLDER_TOKEN, lstrip=False, rstrip=False)])
-        placeholder_token_id = tokenizer.convert_tokens_to_ids(PLACEHOLDER_TOKEN)
+        tokenizer.add_tokens(
+            [AddedToken(PLACEHOLDER_TOKEN, lstrip=False, rstrip=False)])
+        placeholder_token_id = tokenizer.convert_tokens_to_ids(
+            PLACEHOLDER_TOKEN)
         model.resize_token_embeddings(len(tokenizer))
 
-    ## prepare prompt
+    # prepare prompt
     dev_data, test_data = load_dataset(
         args.data,
         args.use_rag,
@@ -712,7 +765,8 @@ if __name__ == "__main__":
             original_orders.extend([idx] * len(background))
 
         backgrounds = [x for y in backgrounds for x in y]
-        print(f"Preparing document embedding with {args.retriever_name_or_path}...")
+        print(
+            f"Preparing document embedding with {args.retriever_name_or_path}...")
         _retrieval_embeds = prepare_retrieval_embeds(
             backgrounds,
             questions,
@@ -725,13 +779,22 @@ if __name__ == "__main__":
         for id, embeds in zip(original_orders, _retrieval_embeds):
             retrieval_embeds[id].append(embeds)
         print("len of retrieval_embeds", len(retrieval_embeds))
+        if args.add_dp_noise:
+            for idx in range(len(retrieval_embeds)):
+                retrieval_embeds[idx][0] = add_gaussian_noise(
+                    retrieval_embeds[idx][0],
+                    epsilon=args.dp_epsilon,
+                    delta=args.dp_delta,
+                    sensitivity=args.dp_sensitivity
+                )
 
     avg_prompt_length = tokenizer(prompts, return_length=True).length
     avg_prompt_length = sum(avg_prompt_length) / len(avg_prompt_length)
 
     if retriever is not None:
         assert PLACEHOLDER_TOKEN in tokenizer.get_vocab()
-        model.set_placeholder_token_id(tokenizer.convert_tokens_to_ids(PLACEHOLDER_TOKEN))
+        model.set_placeholder_token_id(
+            tokenizer.convert_tokens_to_ids(PLACEHOLDER_TOKEN))
 
     if args.task_type in ["open_qa", "fact_checking", "paraphase"]:
         generated_results = llm_for_open_generation(
@@ -748,15 +811,18 @@ if __name__ == "__main__":
     else:
         answers = [x["answer"] for x in test_data]
     if args.eval_metrics == "substring_match":
-        score, score_per_sample = get_substring_match_score(generated_results, answers)
+        score, score_per_sample = get_substring_match_score(
+            generated_results, answers)
     elif args.eval_metrics == "fact_checking_acc":
-        score, score_per_sample = eval_fact_checking(generated_results, answers)
+        score, score_per_sample = eval_fact_checking(
+            generated_results, answers)
     elif args.eval_metrics == "f1_rl_bleu":
-        f1, rl, f1_scores, rl_scores = eval_truthfulqa(generated_results, answers)
-        bleu,bleu_scores = calculate_sacrebleu(generated_results, answers)
+        f1, rl, f1_scores, rl_scores = eval_truthfulqa(
+            generated_results, answers)
+        bleu, bleu_scores = calculate_sacrebleu(generated_results, answers)
         score = f"{f1}-{rl}-{bleu}"
         score_per_sample = [
-            (f1_score, rl_score,bleu_score) for f1_score, rl_score,bleu_score in zip(f1_scores, rl_scores,bleu_scores)
+            (f1_score, rl_score, bleu_score) for f1_score, rl_score, bleu_score in zip(f1_scores, rl_scores, bleu_scores)
         ]
 
     result_dict = {
@@ -802,5 +868,5 @@ if __name__ == "__main__":
         with open(os.path.join(args.output_path, "config.yaml"), "w") as f:
             yaml_config = vars(args)
             yaml.dump(yaml_config, f)
-            
+
         print(f"Results saved to {args.output_path}")
