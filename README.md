@@ -1,9 +1,9 @@
 # PriRAG
 
-Official repo for [Privacy-Preserving Cloud-based Retrieval-Augmented Generation via Proxy Knowledge]()
+Official repo for [Privacy-Preserving Cloud-based Retrieval-Augmented Generation]()
 
 <div align=center>
-<img src="assets/Method.jpg" alt="PriRAG">
+<img src="assets/method.png" alt="PriRAG">
 </div>
 
 ## Overview
@@ -11,7 +11,7 @@ PriRAG is a privacy-preserving framework for cloud-based RAG systems that protec
 
 1. **knowledge Construction**: We introduce a knowledge construction mechanism within the knowledge encoder $\mathbb{E}$ that ensures the generated proxy representations are well-aligned with the embedding space of the LLM.
 2. **Query-Centric Privacy-Preserving**: To further mitigate privacy leakage arising from redundant content, we propose a query-centric privacy-preserving method accompanied by a tailored training strategy. This design minimizes sensitive information exposure while ensuring that the cloud-based LLM can accurately interpret and utilize the compressed proxy representations for downstream tasks.
-3. **Privacy-Preserving Collaborative Inference**: To tightly control potential privacy leakage from proxy representations, we develop a privacy-preserving collaborative inference strategy by integrating a DP mechanism, effectively balancing the utility–privacy trade-off.
+3. **Privacy-Preserving Collaborative Inference**: To tightly control potential privacy leakage from proxy representations, we develop a privacy-preserving collaborative inference strategy by integrating the LDP mechanism, effectively balancing the utility–privacy trade-off.
 
 
 ## Get Started
