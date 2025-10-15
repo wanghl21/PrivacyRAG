@@ -30,6 +30,7 @@ pip install -r requirements.txt
 ## Model & Data
 - Download [enwiki-dec2021](https://github.com/facebookresearch/atlas?tab=readme-ov-file#models) as pretraining data
 - Run [prepare_data.py](data/finetune/prepare_data.py) to prepare the data for finetuning
+- Trained [knowledge encoder](https://drive.google.com/drive/folders/1N_CLzpxVnxylzC3SAiQpAIR9R2VgYF7d?usp=sharing) for various LLMs
 
 ## Training
 We provide [train.sh](./script/train.sh) to easily run both pretraining and finetuning. You can customize pretraining parameters in `config/pretrain.yaml` and finetuning parameters in `config/finetune.yaml`.
